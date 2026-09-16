@@ -1,7 +1,7 @@
 import { formatEther } from "ethers";
 import { getProvider } from "../provider";
 import { getBlockchainConfig } from "../config";
-import { BlockchainNotConfiguredError } from "../errors";
+import { requireConfiguredAddress } from "../errors";
 import type { TreasuryState } from "@/types";
 
 /**
@@ -10,10 +10,10 @@ import type { TreasuryState } from "@/types";
  */
 export async function getTreasuryBalance(contractAddress?: string): Promise<TreasuryState> {
   const { chainId } = getBlockchainConfig();
-  const address = contractAddress || getBlockchainConfig().treasuryContract;
-  if (!address) {
-    throw new BlockchainNotConfiguredError("Treasury contract address");
-  }
+  const address = requireConfiguredAddress(
+    contractAddress || getBlockchainConfig().treasuryContract,
+    "Treasury contract address"
+  );
 
   // Native MATIC balance works without any ABI; ERC-20 treasury balances
   // require the real Treasury ABI and are added once it's available.

@@ -10,7 +10,7 @@ export interface RecordActivityInput {
 }
 
 /**
- * Insert an activity row, relying on the partial unique index
+ * Insert an activity row, relying on the unique index
  * (samooh_id, type, transaction_hash) for on-chain event deduplication.
  * A conflict means this event was already indexed — treated as success.
  */

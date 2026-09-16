@@ -12,7 +12,7 @@ export interface SyncResult {
 /**
  * Lightweight manual/cron-triggered sync: pulls Governance + Treasury
  * events for one Samooh since `fromBlock` and stores each as an Activity
- * row. Deduplication is handled by the DB's partial unique index on
+ * row. Deduplication is handled by the DB's unique index on
  * (samooh_id, type, transaction_hash) — see activity.service.ts.
  */
 export async function syncSamoohActivity(

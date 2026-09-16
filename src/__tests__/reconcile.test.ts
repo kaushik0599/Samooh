@@ -16,16 +16,18 @@ const baseProposal: Proposal = {
   created_at: new Date().toISOString(),
 };
 
-test("reconcileProposalStatus leaves DB status as-is when never submitted on-chain", async () => {
+test("reconcileProposalStatus reports CACHE for a proposal never submitted on-chain", async () => {
   const result = await reconcileProposalStatus(baseProposal);
   assert.equal(result.status, "APPROVED");
+  assert.equal(result.status_source, "CACHE");
 });
 
-test("reconcileProposalStatus is a no-op when blockchain is not configured, even if onchain id is set", async () => {
+test("reconcileProposalStatus reports BLOCKCHAIN_UNAVAILABLE (never fabricates live state) when chain is not configured, even with an onchain id", async () => {
   // Invariant: without a configured chain, we must not silently invent
-  // authority the backend doesn't have — we fall back to the DB cache
-  // rather than fabricating a status.
+  // authority the backend doesn't have — we fall back to the DB cache and
+  // say so explicitly rather than claiming a live read.
   const proposalWithOnchainId: Proposal = { ...baseProposal, onchain_proposal_id: "3" };
   const result = await reconcileProposalStatus(proposalWithOnchainId);
   assert.equal(result.status, "APPROVED");
+  assert.equal(result.status_source, "BLOCKCHAIN_UNAVAILABLE");
 });

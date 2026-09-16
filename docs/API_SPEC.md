@@ -7,7 +7,13 @@ Base response envelope:
 { "success": true, "data": { } }
 // error
 { "success": false, "error": "message" }
+// error, with optional machine-readable category
+{ "success": false, "error": "message", "code": "VALIDATION_ERROR" }
 ```
+
+`code` is additive and optional — always ignorable by clients that only read
+`error`. When present it is one of: `VALIDATION_ERROR` (400), `NOT_FOUND`
+(404), `CONFLICT` (409), `INTERNAL_ERROR` (500).
 
 Status codes: `200` read ok, `201` created, `400` validation error,
 `404` not found, `409` conflict (e.g. duplicate join request), `500` server error.
@@ -19,8 +25,15 @@ Returns a `Samooh`. 404 if not found.
 Returns `Member[]`.
 
 ## GET /api/proposals/[samoohId]
-Returns `Proposal[]`, with `status` reconciled against on-chain state for
-any proposal that has an `onchain_proposal_id`.
+Returns `ReconciledProposal[]` — each `Proposal` plus `status_source`:
+`LIVE_ONCHAIN` (status just read from chain), `CACHE` (never submitted
+on-chain, DB value stands), or `BLOCKCHAIN_UNAVAILABLE` (chain not
+configured/unreachable — DB value shown but not claimed as live).
+
+## GET /api/health
+No params. Always `200`. Returns
+`{ status: "ok", supabase: "configured"|"not_configured", blockchain: "configured"|"not_configured", timestamp }`.
+Config-presence check only — no live DB/RPC round-trip.
 
 ## GET /api/activity/[samoohId]
 Returns `Activity[]`, newest first.
@@ -72,6 +85,7 @@ Body: `{ samooh_id, onchain_proposal_id?, title, description?, amount?, recipien
 Records proposal **metadata only** with `status: DRAFT`. Never
 votes/approves/executes/transfers. Submitting on-chain and updating
 `onchain_proposal_id` happens through the client wallet + a follow-up write.
+`409` if a proposal with that `onchain_proposal_id` already exists for the Samooh.
 
 ## POST /api/sarthi/analyze
 Body: `{ samooh_id }`
@@ -92,10 +106,10 @@ BLOCKCHAIN_INTEGRATION.md). Idempotent — safe to call repeatedly or via cron.
 ## Shared types
 
 All request/response shapes reference `src/types/index.ts`:
-`User`, `Samooh`, `Member`, `Proposal`, `SarthiInsight`, `Activity`,
-`BlockchainProposal`, `GovernanceState`, `TreasuryState`,
-`UserOnboardingProfile`, `SamoohJoinRequest`, `SamoohDiscoveryResult`,
-`SamoohFormationSuggestion`.
+`User`, `Samooh`, `Member`, `Proposal`, `ReconciledProposal`,
+`ProposalStatusSource`, `SarthiInsight`, `Activity`, `BlockchainProposal`,
+`GovernanceState`, `TreasuryState`, `UserOnboardingProfile`,
+`SamoohJoinRequest`, `SamoohDiscoveryResult`, `SamoohFormationSuggestion`.
 
 `Proposal.status` lifecycle: `DRAFT -> CREATED -> VOTING -> APPROVED | REJECTED -> EXECUTED`,
 or `EXPIRED` at any point after `CREATED`.

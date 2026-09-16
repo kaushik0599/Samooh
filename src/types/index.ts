@@ -63,6 +63,17 @@ export interface Proposal {
   created_at: string;
 }
 
+/**
+ * Where a reconciled proposal's `status` actually came from — lets callers
+ * tell a live on-chain read apart from a stale/offline fallback instead of
+ * silently trusting the DB cache. See reconcile.service.ts.
+ */
+export type ProposalStatusSource = "LIVE_ONCHAIN" | "CACHE" | "BLOCKCHAIN_UNAVAILABLE";
+
+export interface ReconciledProposal extends Proposal {
+  status_source: ProposalStatusSource;
+}
+
 export type SarthiInsightType =
   | "opportunity"
   | "procurement"
@@ -193,6 +204,8 @@ export interface ApiSuccess<T> {
 export interface ApiError {
   success: false;
   error: string;
+  /** Optional machine-readable category — additive, always safe to ignore. */
+  code?: string;
 }
 
 export type ApiResponse<T> = ApiSuccess<T> | ApiError;

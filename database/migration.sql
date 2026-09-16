@@ -126,11 +126,19 @@ create table if not exists activity (
 create index if not exists idx_activity_samooh_id on activity(samooh_id);
 create index if not exists idx_activity_created_at on activity(created_at desc);
 
--- Deduplicate on-chain events: one activity row per (event type, tx hash),
--- allowing null tx hashes (e.g. off-chain Sarthi-originated activity) to repeat.
+-- Deduplicate on-chain events: one activity row per (event type, tx hash).
+-- This must be a FULL (non-partial) unique index: Postgres only uses a
+-- partial index as an ON CONFLICT arbiter when the conflict clause's
+-- predicate exactly matches the index's WHERE clause, and the Supabase
+-- upsert() in activity.service.ts's recordActivity() (onConflict:
+-- "samooh_id,type,transaction_hash") cannot express that predicate — against
+-- a partial index every insert would error with "no unique or exclusion
+-- constraint matching the ON CONFLICT specification". A plain unique index
+-- still allows null tx hashes (e.g. off-chain Sarthi-originated activity) to
+-- repeat freely, since standard SQL unique constraints treat NULL <> NULL.
+drop index if exists idx_activity_dedupe;
 create unique index if not exists idx_activity_dedupe
-  on activity(samooh_id, type, transaction_hash)
-  where transaction_hash is not null;
+  on activity(samooh_id, type, transaction_hash);
 
 -- user_onboarding_profiles -----------------------------------------------------------------
 -- One profile per user, reusing the existing `users` table for identity
@@ -176,3 +184,63 @@ create index if not exists idx_samooh_join_requests_wallet on samooh_join_reques
 create unique index if not exists idx_samooh_join_requests_active_unique
   on samooh_join_requests(samooh_id, wallet_address)
   where status in ('REQUESTED', 'APPROVED');
+
+-- Wallet/address lowercase, defense-in-depth -----------------------------
+-- The application layer already lowercases every wallet/address before
+-- writing (see requireWalletAddress in src/lib/validation/index.ts), but
+-- nothing at the DB layer enforced that. Normalize any pre-existing rows
+-- first (no-op if the app has always lowercased) so the CHECK constraints
+-- below are guaranteed safe to add, then add the constraints themselves
+-- guarded by existence checks so this block is safe to re-run.
+update users set wallet_address = lower(wallet_address)
+  where wallet_address <> lower(wallet_address);
+update samoohs set creator_wallet = lower(creator_wallet)
+  where creator_wallet <> lower(creator_wallet);
+update samoohs set governance_contract = lower(governance_contract)
+  where governance_contract <> lower(governance_contract);
+update samoohs set treasury_contract = lower(treasury_contract)
+  where treasury_contract <> lower(treasury_contract);
+update members set wallet_address = lower(wallet_address)
+  where wallet_address <> lower(wallet_address);
+update proposals set recipient = lower(recipient)
+  where recipient is not null and recipient <> lower(recipient);
+update proposals set created_by = lower(created_by)
+  where created_by <> lower(created_by);
+update samooh_join_requests set wallet_address = lower(wallet_address)
+  where wallet_address <> lower(wallet_address);
+
+do $$
+begin
+  if not exists (select 1 from pg_constraint where conname = 'users_wallet_address_lowercase') then
+    alter table users add constraint users_wallet_address_lowercase
+      check (wallet_address = lower(wallet_address));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'samoohs_creator_wallet_lowercase') then
+    alter table samoohs add constraint samoohs_creator_wallet_lowercase
+      check (creator_wallet = lower(creator_wallet));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'samoohs_governance_contract_lowercase') then
+    alter table samoohs add constraint samoohs_governance_contract_lowercase
+      check (governance_contract = lower(governance_contract));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'samoohs_treasury_contract_lowercase') then
+    alter table samoohs add constraint samoohs_treasury_contract_lowercase
+      check (treasury_contract = lower(treasury_contract));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'members_wallet_address_lowercase') then
+    alter table members add constraint members_wallet_address_lowercase
+      check (wallet_address = lower(wallet_address));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'proposals_recipient_lowercase') then
+    alter table proposals add constraint proposals_recipient_lowercase
+      check (recipient is null or recipient = lower(recipient));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'proposals_created_by_lowercase') then
+    alter table proposals add constraint proposals_created_by_lowercase
+      check (created_by = lower(created_by));
+  end if;
+  if not exists (select 1 from pg_constraint where conname = 'samooh_join_requests_wallet_lowercase') then
+    alter table samooh_join_requests add constraint samooh_join_requests_wallet_lowercase
+      check (wallet_address = lower(wallet_address));
+  end if;
+end $$;

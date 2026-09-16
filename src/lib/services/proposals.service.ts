@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase/client";
+import { ConflictError } from "@/lib/api/response";
 import type { Proposal } from "@/types";
 
 export interface CreateProposalInput {
@@ -25,7 +26,15 @@ export async function createProposal(input: CreateProposalInput): Promise<Propos
     .select()
     .single();
 
-  if (error) throw new Error(`Failed to create proposal: ${error.message}`);
+  if (error) {
+    // proposals_unique_onchain_id (samooh_id, onchain_proposal_id): another
+    // proposal for this on-chain id was already persisted, possibly via a
+    // concurrent request.
+    if (error.code === "23505") {
+      throw new ConflictError("A proposal with this on-chain id already exists for this Samooh");
+    }
+    throw new Error(`Failed to create proposal: ${error.message}`);
+  }
   return data as Proposal;
 }
 

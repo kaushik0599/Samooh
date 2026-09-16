@@ -2,7 +2,7 @@ import { Contract } from "ethers";
 import { getProvider } from "../provider";
 import { getBlockchainConfig } from "../config";
 import { GOVERNANCE_ABI } from "../abi/governance.abi";
-import { BlockchainNotConfiguredError } from "../errors";
+import { BlockchainNotConfiguredError, requireConfiguredAddress } from "../errors";
 import { normalizeProposal, type RawProposal } from "../normalize";
 import type { BlockchainProposal, GovernanceState, Member } from "@/types";
 
@@ -12,10 +12,10 @@ import type { BlockchainProposal, GovernanceState, Member } from "@/types";
  * contract instance — see samoohs.governance_contract).
  */
 function getGovernanceContract(contractAddress?: string): Contract {
-  const address = contractAddress || getBlockchainConfig().governanceContract;
-  if (!address) {
-    throw new BlockchainNotConfiguredError("Governance contract address");
-  }
+  const address = requireConfiguredAddress(
+    contractAddress || getBlockchainConfig().governanceContract,
+    "Governance contract address"
+  );
   if (GOVERNANCE_ABI.length === 0) {
     throw new BlockchainNotConfiguredError("Governance contract ABI");
   }

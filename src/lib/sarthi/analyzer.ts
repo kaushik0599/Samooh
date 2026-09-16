@@ -66,7 +66,7 @@ export function analyzeCollective(
       title: "Low voting participation",
       description: `Only ${voteCasts} votes recorded across ${proposals.length} proposal(s) for ${members.length} members.`,
       recommendation:
-        "Encourage members to vote on open proposals to reach quorum reliably.",
+        "Encourage members to weigh in on open proposals to reach quorum reliably.",
       priority: "medium",
     });
   }

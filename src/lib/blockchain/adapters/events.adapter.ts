@@ -3,7 +3,7 @@ import { getProvider } from "../provider";
 import { getBlockchainConfig } from "../config";
 import { GOVERNANCE_ABI } from "../abi/governance.abi";
 import { TREASURY_ABI } from "../abi/treasury.abi";
-import { BlockchainNotConfiguredError } from "../errors";
+import { BlockchainNotConfiguredError, requireConfiguredAddress } from "../errors";
 import { GOVERNANCE_EVENTS, TREASURY_EVENTS, type RawChainEvent } from "../events";
 import type { ActivityType } from "@/types";
 
@@ -36,8 +36,10 @@ export async function getGovernanceEvents(
   toBlock: number | "latest" = "latest",
   contractAddress?: string
 ): Promise<RawChainEvent[]> {
-  const address = contractAddress || getBlockchainConfig().governanceContract;
-  if (!address) throw new BlockchainNotConfiguredError("Governance contract address");
+  const address = requireConfiguredAddress(
+    contractAddress || getBlockchainConfig().governanceContract,
+    "Governance contract address"
+  );
   if (GOVERNANCE_ABI.length === 0) throw new BlockchainNotConfiguredError("Governance contract ABI");
 
   const contract = new Contract(address, GOVERNANCE_ABI, getProvider());
@@ -49,8 +51,10 @@ export async function getTreasuryEvents(
   toBlock: number | "latest" = "latest",
   contractAddress?: string
 ): Promise<RawChainEvent[]> {
-  const address = contractAddress || getBlockchainConfig().treasuryContract;
-  if (!address) throw new BlockchainNotConfiguredError("Treasury contract address");
+  const address = requireConfiguredAddress(
+    contractAddress || getBlockchainConfig().treasuryContract,
+    "Treasury contract address"
+  );
   if (TREASURY_ABI.length === 0) throw new BlockchainNotConfiguredError("Treasury contract ABI");
 
   const contract = new Contract(address, TREASURY_ABI, getProvider());

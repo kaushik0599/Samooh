@@ -28,10 +28,19 @@ treasury balance/transfers — the `proposals.status` column here is a
 
 ## Constraints
 
-- All wallet/contract/recipient columns are checked against `^0x[a-f0-9]{40}$`.
-- `activity` has a partial unique index on `(samooh_id, type, transaction_hash)`
-  (where `transaction_hash is not null`) — this is how the indexer
-  deduplicates on-chain events on re-sync.
+- All wallet/contract/recipient columns are checked against `^0x[a-f0-9]{40}$`,
+  **and** against being lowercase (`col = lower(col)`) as defense-in-depth —
+  the app layer already lowercases every address before writing
+  (`requireWalletAddress`), these constraints just guarantee it DB-side too.
+- `activity` has a **full** (non-partial) unique index on
+  `(samooh_id, type, transaction_hash)` — this is how the indexer
+  deduplicates on-chain events on re-sync. It must NOT be partial
+  (`where transaction_hash is not null`): Supabase's `.upsert(...,
+  { onConflict: "samooh_id,type,transaction_hash" })` compiles to an
+  `ON CONFLICT` clause with no predicate, and Postgres only accepts a
+  partial index as an arbiter when the predicate matches exactly — a
+  plain unique index still lets null tx hashes repeat freely since SQL
+  treats `NULL <> NULL`.
 - `proposals.status` is constrained to the `ProposalStatus` enum in
   `src/types/index.ts`; keep both in sync if it ever changes.
 - `samooh_join_requests` has a partial unique index on
