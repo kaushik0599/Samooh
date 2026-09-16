@@ -1,5 +1,12 @@
 # API Spec
 
+Base URL: this backend runs as its own app (see `backend/`), on
+`http://localhost:4000` in local dev. The frontend calls it via
+`NEXT_PUBLIC_API_URL` (see `frontend/.env.example`) — every path below is
+relative to that base URL, not same-origin. CORS is handled uniformly by
+`backend/middleware.ts` for the origin in `FRONTEND_ORIGIN`
+(`backend/.env.example`); no individual route configures it.
+
 Base response envelope:
 
 ```json
@@ -52,7 +59,7 @@ by wallet (creating it if new) and their `UserOnboardingProfile`. Returns
 ## GET /api/discover/samoohs
 Query: `?wallet_address=0x...`. Requires a completed onboarding profile for
 that wallet (`400` otherwise). Runs deterministic matching (see
-`src/lib/discovery/matcher.ts`) against every Samooh and returns:
+`backend/src/lib/discovery/matcher.ts`) against every Samooh and returns:
 ```json
 {
   "success": true,
@@ -105,7 +112,7 @@ BLOCKCHAIN_INTEGRATION.md). Idempotent — safe to call repeatedly or via cron.
 
 ## Shared types
 
-All request/response shapes reference `src/types/index.ts`:
+All request/response shapes reference `packages/types/src/index.ts`:
 `User`, `Samooh`, `Member`, `Proposal`, `ReconciledProposal`,
 `ProposalStatusSource`, `SarthiInsight`, `Activity`, `BlockchainProposal`,
 `GovernanceState`, `TreasuryState`, `UserOnboardingProfile`,

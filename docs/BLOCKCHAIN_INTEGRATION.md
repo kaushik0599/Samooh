@@ -1,6 +1,6 @@
 # Blockchain Integration Requirements
 
-The backend's blockchain layer (`src/lib/blockchain/`) is a read-only
+The backend's blockchain layer (`backend/src/lib/blockchain/`) is a read-only
 ethers.js adapter, isolated from ABI specifics so it can be updated in one
 place once real contracts exist. It **never** holds a signer or private key.
 
@@ -12,18 +12,20 @@ place once real contracts exist. It **never** holds a signer or private key.
    Every adapter validates the address shape (`ethers.isAddress`) before
    constructing a contract instance — a missing or malformed address fails
    with a clear `BlockchainNotConfiguredError` instead of a raw ethers
-   error (see `requireConfiguredAddress` in `src/lib/blockchain/errors.ts`).
+   error (see `requireConfiguredAddress` in `packages/types/src/blockchain.ts`
+   — shared with the frontend, see `contracts/README.md`).
 2. **ABI** for both contracts — drop into
-   `src/lib/blockchain/abi/governance.abi.ts` and `treasury.abi.ts`
-   (currently empty placeholders; every adapter call throws
-   `BlockchainNotConfiguredError` until filled in).
+   `packages/types/src/blockchain.ts` (`GOVERNANCE_ABI` / `TREASURY_ABI`,
+   currently empty placeholders; every adapter call throws
+   `BlockchainNotConfiguredError` until filled in). This one file feeds
+   both `backend/` and `frontend/` — see `contracts/README.md`.
 3. **Network**: Polygon Amoy, chain id `80002` (`NEXT_PUBLIC_CHAIN_ID`).
 
 ## Expected read functions (Governance)
 
 The adapter (`adapters/governance.adapter.ts`) calls:
 - `getProposal(proposalId) -> RawProposal` — see the exact shape assumed
-  in `src/lib/blockchain/normalize.ts`:
+  in `backend/src/lib/blockchain/normalize.ts`:
   `{ proposalId, status: uint8, votesFor, votesAgainst, quorum, recipient, amount, executed }`
 - Assumed status enum (confirm/replace in `normalize.ts`):
   `0=CREATED 1=VOTING 2=APPROVED 3=REJECTED 4=EXECUTED 5=EXPIRED`
@@ -35,7 +37,7 @@ Governance: `ProposalCreated`, `VoteCast`, `ProposalApproved`,
 
 Treasury: `TreasuryDeposit`, `TreasuryTransfer`.
 
-Event args are read generically (`src/lib/blockchain/events.ts:extractActor`
+Event args are read generically (`backend/src/lib/blockchain/events.ts:extractActor`
 tries common field names: `member/voter/proposer/actor/from/by`). Once the
 real event signatures are known, tighten `extractActor` / `describeEvent`
 to use the actual field names for richer activity descriptions.
@@ -49,7 +51,7 @@ proposal it returns carries `status_source`:
 - `BLOCKCHAIN_UNAVAILABLE` — chain not configured, ABI missing, or the RPC
   call failed; the DB value is shown but explicitly not claimed as live.
 
-See `src/lib/services/reconcile.service.ts`.
+See `backend/src/lib/services/reconcile.service.ts`.
 
 ## Indexing
 
@@ -80,7 +82,7 @@ events that didn't get recorded end up inserted.
 
 ### Known limitation: duplicate same-type events within one transaction
 
-`RawChainEvent` (`src/lib/blockchain/events.ts`) carries only
+`RawChainEvent` (`backend/src/lib/blockchain/events.ts`) carries only
 `{ eventName, transactionHash, args }` — no block number and no log index.
 The dedupe key used by `recordActivity`
 (`samooh_id, type, transaction_hash`) is therefore only unique **across
@@ -98,7 +100,7 @@ pass deliberately does not add speculative fields or guess at it.
 Ready-to-apply fix, once the blockchain team confirms same-tx duplicate
 events are possible: ethers v6's `Log` objects (what
 `contract.queryFilter(...)` returns in
-`src/lib/blockchain/adapters/events.adapter.ts`) already expose both
+`backend/src/lib/blockchain/adapters/events.adapter.ts`) already expose both
 `log.blockNumber` and `log.index` (the log's index within the block) at no
 extra RPC cost — no adapter-level querying changes needed to obtain them.
 The fix would be: extend `RawChainEvent` with a `logIndex: number` field,

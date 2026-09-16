@@ -7,19 +7,19 @@ Full narrative docs live in the other `docs/*.md` files — this is the map.
 
 | Area | Owns | Must not touch |
 |---|---|---|
-| API + DB (`src/app/api/**`, `src/lib/services/*.service.ts`, `database/`) | Routes, validation wiring, Supabase services, migrations | Blockchain adapter internals, Sarthi/discovery scoring logic |
-| Blockchain (`src/lib/blockchain/**`) | ethers provider, ABI, adapters, normalization, event indexing | Never adds a signer/private key/treasury-transfer endpoint. Never invents ABI/contract data. |
-| Sarthi + Discovery (`src/lib/sarthi/**`, `src/lib/discovery/**`) | Deterministic analysis, matching/scoring, formation suggestions | Never writes governance/treasury state; never calls the blockchain adapter's write path (there isn't one) |
+| API + DB (`backend/src/app/api/**`, `backend/src/lib/services/*.service.ts`, `database/`) | Routes, validation wiring, Supabase services, migrations | Blockchain adapter internals, Sarthi/discovery scoring logic |
+| Blockchain (`backend/src/lib/blockchain/**`) | ethers provider, ABI, adapters, normalization, event indexing | Never adds a signer/private key/treasury-transfer endpoint. Never invents ABI/contract data. |
+| Sarthi + Discovery (`backend/src/lib/sarthi/**`, `backend/src/lib/discovery/**`) | Deterministic analysis, matching/scoring, formation suggestions | Never writes governance/treasury state; never calls the blockchain adapter's write path (there isn't one) |
 | QA/Security | Cross-cutting review only | Owns no files; verifies invariants and fixes integration bugs it finds |
 
 ## Files with a single designated owner (do not parallel-edit)
 
-- `src/types/index.ts` — Architect. Every other agent requests additions
+- `packages/types/src/index.ts` — Architect. Every other agent requests additions
   through the Architect rather than editing directly.
 - `package.json`
 - `docs/API_SPEC.md`
 
-## Shared types (single source of truth: `src/types/index.ts`)
+## Shared types (single source of truth: `packages/types/src/index.ts`)
 
 `User`, `UserOnboardingProfile`, `Samooh`, `Member`, `Proposal`,
 `ProposalStatus`, `ProposalStatusSource`, `ReconciledProposal`,
@@ -54,7 +54,7 @@ insights, proposal drafts, and formation suggestions
 (`SamoohFormationSuggestion`). Cannot vote, approve, reject, execute,
 transfer funds, auto-create a Samooh, or auto-approve a member. Enforced
 by construction (no such functions exist) and checked by
-`src/__tests__/sarthi-analyzer.test.ts` / `formation.test.ts` / `no-signer.test.ts`.
+`backend/src/__tests__/sarthi-analyzer.test.ts` / `formation.test.ts` / `no-signer.test.ts`.
 
 ## Integration dependencies
 

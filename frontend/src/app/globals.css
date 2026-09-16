@@ -1,0 +1,239 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * SAMOOH design tokens, extracted from the project lead's reference HTML
+ * (landing + dashboard mockups — see frontend design pass notes). Values are
+ * space-separated RGB triples so Tailwind opacity modifiers work (see
+ * tailwind.config.ts). `.dark` overrides are applied by next-themes toggling
+ * a `dark` class on <html>.
+ *
+ * Two reference surfaces share one palette: the marketing site is a glassy,
+ * near-black "collective intelligence" aesthetic (see .glass-panel /
+ * .landing-field below), the product workspace is a clean, light SaaS
+ * dashboard. Same hues (signal blue, cyan, collective green), two textures.
+ */
+:root {
+  --color-background: 246 248 251; /* #f6f8fb */
+  --color-surface: 255 255 255;
+  --color-surface-secondary: 240 243 248; /* #f0f3f8 */
+  --color-border: 224 229 237; /* #e0e5ed */
+  --color-text-primary: 14 26 51; /* #0e1a33 */
+  --color-text-secondary: 117 128 154; /* #75809a */
+  --color-primary: 24 90 232; /* #185ae8 */
+  --color-primary-hover: 15 66 189; /* #0f42bd */
+  --color-cyan: 32 184 196; /* #20b8c4 */
+  --color-success: 22 173 140; /* #16ad8c */
+  --color-warning: 213 138 85; /* #d58a55 */
+  --color-error: 216 93 103; /* #d85d67 */
+  --color-info: 32 184 196; /* cyan doubles as info, per reference */
+  --color-accent-bg: 232 237 255; /* #e8edff — pale blue chip/active-nav bg */
+  --color-accent-bg-success: 228 247 241; /* #e4f7f1 */
+
+  /* Glass-surface tokens (landing only): frosted panels, hairline borders. */
+  --glass-bg: rgba(255, 255, 255, 0.6);
+  --glass-bg-strong: rgba(255, 255, 255, 0.78);
+  --glass-border: rgba(13, 27, 53, 0.1);
+  --glass-highlight: rgba(255, 255, 255, 0.65);
+  --glass-shadow: 0 18px 55px rgba(5, 15, 35, 0.1);
+  --grid-line: rgba(24, 90, 232, 0.055);
+  --card-shadow: 0 8px 26px rgba(20, 35, 65, 0.055);
+}
+
+.dark {
+  --color-background: 10 14 20; /* #0a0e14 */
+  --color-surface: 18 26 36; /* #121a24 */
+  --color-surface-secondary: 24 34 47; /* #18222f */
+  --color-border: 42 54 70; /* #2a3646 */
+  --color-text-primary: 244 247 250; /* #f4f7fa */
+  --color-text-secondary: 147 160 172; /* #93a0ac */
+  --color-primary: 61 120 255; /* #3d78ff */
+  --color-primary-hover: 116 155 255; /* #749bff */
+  --color-cyan: 38 200 209; /* #26c8d1 */
+  --color-success: 43 199 160; /* #2bc7a0 */
+  --color-warning: 213 138 85; /* #d58a55 */
+  --color-error: 227 123 131; /* #e37b83 */
+  --color-info: 38 200 209;
+  --color-accent-bg: 32 43 73; /* #202b49 */
+  --color-accent-bg-success: 23 56 47; /* #17382f */
+
+  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-bg-strong: rgba(255, 255, 255, 0.09);
+  --glass-border: rgba(255, 255, 255, 0.12);
+  --glass-highlight: rgba(255, 255, 255, 0.2);
+  --glass-shadow: 0 22px 70px rgba(0, 0, 0, 0.32);
+  --grid-line: rgba(116, 155, 255, 0.06);
+  --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+* {
+  border-color: rgb(var(--color-border));
+}
+
+body {
+  background-color: rgb(var(--color-background));
+  color: rgb(var(--color-text-primary));
+}
+
+/* Visible, consistent focus ring for keyboard navigation (section 9). */
+:focus-visible {
+  outline: 2px solid rgb(var(--color-primary));
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@layer components {
+  /*
+   * Frosted glass panel used across the marketing site (feature cards,
+   * Sarthi panel, governance cards, onboarding card, ...). Mirrors the
+   * reference's `.glass-card`: hairline border, soft gradient fill,
+   * inset highlight + ambient shadow, gentle lift + blue glow on hover.
+   */
+  .glass-panel {
+    border: 1px solid var(--glass-border);
+    background: linear-gradient(145deg, var(--glass-bg-strong), var(--glass-bg));
+    box-shadow: inset 0 1px 0 var(--glass-highlight), var(--glass-shadow);
+    backdrop-filter: blur(22px) saturate(145%);
+    -webkit-backdrop-filter: blur(22px) saturate(145%);
+    border-radius: 22px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .glass-panel-hover:hover {
+    border-color: rgb(var(--color-primary) / 0.32);
+    transform: translateY(-3px);
+    box-shadow: inset 0 1px 0 var(--glass-highlight), 0 0 0 4px rgb(var(--color-primary) / 0.08),
+      0 24px 60px rgb(var(--color-primary) / 0.12);
+  }
+
+  /* Small pill "kicker" label above section headings, e.g. "· The collective layer". */
+  .landing-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    padding: 7px 11px;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgb(var(--color-text-secondary));
+  }
+  .landing-kicker-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgb(var(--color-success));
+    box-shadow: 0 0 12px rgb(var(--color-success) / 0.8);
+  }
+
+  /* Glass CTA pill — the reference's `.get-started` button. */
+  .btn-glass {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 156px;
+    padding: 13px 20px;
+    border-radius: 14px;
+    border: 1px solid rgb(var(--color-primary) / 0.5);
+    background: linear-gradient(
+      135deg,
+      rgb(var(--color-primary) / 0.85),
+      rgb(var(--color-primary) / 0.62)
+    );
+    color: #fff;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.38), 0 14px 36px rgb(var(--color-primary) / 0.22);
+    backdrop-filter: blur(18px) saturate(155%);
+    -webkit-backdrop-filter: blur(18px) saturate(155%);
+    transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  }
+  .btn-glass:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.48), 0 18px 44px rgb(var(--color-primary) / 0.29);
+  }
+  .btn-glass:active {
+    transform: translateY(0);
+  }
+
+  /* Secondary glass button (outline) — the reference's `.secondary-cta`. */
+  .btn-glass-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    padding: 0 22px;
+    border-radius: 14px;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    color: rgb(var(--color-text-primary));
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    transition: transform 0.25s ease, background 0.25s ease;
+  }
+  .btn-glass-secondary:hover {
+    transform: translateY(-2px);
+    background: var(--glass-bg-strong);
+  }
+
+  /*
+   * Restrained technical background field for the marketing site: an
+   * angled dashed-line texture + soft color bloom, in place of the
+   * reference's embedded watermark raster (see design-pass notes — we
+   * reproduce the effect in CSS rather than shipping a stray asset).
+   */
+  .landing-field {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.9;
+  }
+  .landing-field::before {
+    content: "";
+    position: absolute;
+    width: 125%;
+    height: 190%;
+    left: -12%;
+    top: -45%;
+    background: repeating-linear-gradient(
+      105deg,
+      transparent 0 82px,
+      var(--grid-line) 83px 84px,
+      transparent 85px 145px
+    );
+    transform: rotate(-4deg);
+    mask-image: radial-gradient(ellipse at 50% 50%, black 0%, rgba(0, 0, 0, 0.72) 38%, transparent 76%);
+  }
+  .landing-field::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 47%, rgb(var(--color-primary) / 0.07), transparent 25%),
+      radial-gradient(circle at 25% 60%, rgb(var(--color-success) / 0.05), transparent 23%),
+      radial-gradient(circle at 78% 36%, rgb(var(--color-cyan) / 0.05), transparent 23%);
+  }
+
+  /* Chip used for chains/meta pills, e.g. "Collective data → Analysis". */
+  .glass-pill {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 13px;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--glass-bg);
+    font-size: 12px;
+    color: rgb(var(--color-text-primary));
+  }
+}

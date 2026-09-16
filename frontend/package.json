@@ -1,0 +1,36 @@
+{
+  "name": "samooh-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@radix-ui/react-checkbox": "^1.3.11",
+    "@radix-ui/react-dialog": "^1.1.23",
+    "@radix-ui/react-select": "^2.3.7",
+    "@samooh/types": "file:../packages/types",
+    "autoprefixer": "^10.6.1",
+    "clsx": "^2.1.1",
+    "ethers": "^6.13.4",
+    "lucide-react": "^0.454.0",
+    "next": "^15.0.3",
+    "next-themes": "^0.4.6",
+    "postcss": "^8.5.28",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^3.4.19"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.1.0",
+    "@types/node": "^22.9.0",
+    "@types/react": "^18.3.12",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^15.0.3",
+    "typescript": "^5.6.3"
+  }
+}

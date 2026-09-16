@@ -13,21 +13,21 @@ hardens and completes, it does not rewrite.
 
 ## Current inventory
 
-- Routes (`src/app/api/**/route.ts`): health, samooh (GET/POST),
+- Routes (`backend/src/app/api/**/route.ts`): health, samooh (GET/POST),
   samooh/[id], samooh/[id]/join, members/[samoohId], proposals (GET/POST),
   proposals/[samoohId], activity/[samoohId], onboarding, discover/samoohs,
   sarthi/analyze, sarthi/proposal, blockchain/sync.
-- Services (`src/lib/services/*.service.ts`): samooh, members, proposals,
+- Services (`backend/src/lib/services/*.service.ts`): samooh, members, proposals,
   activity, sarthi, users, onboarding, discovery, join-requests, reconcile,
   indexing.
-- Blockchain (`src/lib/blockchain/**`): provider, config, errors,
+- Blockchain (`backend/src/lib/blockchain/**`): provider, config, errors,
   normalize, events, adapters/{governance,treasury,events}, empty ABI
   placeholders.
-- Sarthi/Discovery (`src/lib/sarthi/**`, `src/lib/discovery/**`):
+- Sarthi/Discovery (`backend/src/lib/sarthi/**`, `backend/src/lib/discovery/**`):
   analyzer, context, provider, formation; matcher.
-- Shared (`src/types/index.ts`, `src/lib/validation`, `src/lib/api/response.ts`,
-  `src/lib/supabase/client.ts`).
-- Tests (`src/__tests__/*.test.ts`): validation, normalize, reconcile,
+- Shared (`packages/types/src/index.ts`, `backend/src/lib/validation`, `backend/src/lib/api/response.ts`,
+  `backend/src/lib/supabase/client.ts`).
+- Tests (`backend/src/__tests__/*.test.ts`): validation, normalize, reconcile,
   sarthi-analyzer, matcher, formation, health, no-signer.
 
 ## Known integration risk points for this round
@@ -44,9 +44,9 @@ hardens and completes, it does not rewrite.
    per wallet/address column, additive via `alter table ... add constraint
    ... check (...) not valid; alter table ... validate constraint ...`
    guarded to skip if already present.
-3. **Shared files** (`src/types/index.ts`, `package.json`,
+3. **Shared files** (`packages/types/src/index.ts`, `package.json`,
    `database/migration.sql` top-level ownership, `docs/API_SPEC.md`): single
-   owner per file per `BACKEND_MULTIAGENT.md`. `src/types/index.ts` and
+   owner per file per `BACKEND_MULTIAGENT.md`. `packages/types/src/index.ts` and
    `package.json` stay with the orchestrator this round — specialists
    propose additions in their report instead of editing directly, to avoid
    concurrent-write conflicts across parallel agents.
@@ -54,10 +54,10 @@ hardens and completes, it does not rewrite.
 ## Phase plan
 
 1. Architect (this doc) — done.
-2. Parallel: DB Engineer (`database/migration.sql`, `src/lib/services/*.service.ts`),
-   API Engineer (`src/app/api/**`, `src/lib/validation`, `src/lib/api/response.ts`,
-   `docs/API_SPEC.md`), Blockchain Engineer (`src/lib/blockchain/**`),
-   Sarthi/Discovery Engineer (`src/lib/sarthi/**`, `src/lib/discovery/**`),
+2. Parallel: DB Engineer (`database/migration.sql`, `backend/src/lib/services/*.service.ts`),
+   API Engineer (`backend/src/app/api/**`, `backend/src/lib/validation`, `backend/src/lib/api/response.ts`,
+   `docs/API_SPEC.md`), Blockchain Engineer (`backend/src/lib/blockchain/**`),
+   Sarthi/Discovery Engineer (`backend/src/lib/sarthi/**`, `backend/src/lib/discovery/**`),
    Security Engineer (audit-only, no edits — findings feed Final Integration).
 3. Orchestrator folds in any shared-type/dependency additions the
    specialists requested.
@@ -81,9 +81,9 @@ on areas just verified clean:
   intervening edits since. Re-spawning full audits here would be pure
   churn — skipped. Spot-checked directly instead: confirmed no
   `POST /api/treasury/withdraw`-style endpoint exists anywhere under
-  `src/app/api` (grepped); confirmed `indexing.service.ts`'s dedup now
+  `backend/src/app/api` (grepped); confirmed `indexing.service.ts`'s dedup now
   rides the corrected full unique index and is safe to call repeatedly.
-- **Genuine gap found**: `RawChainEvent` (`src/lib/blockchain/events.ts`)
+- **Genuine gap found**: `RawChainEvent` (`backend/src/lib/blockchain/events.ts`)
   carries only `{eventName, transactionHash, args}` — no log index. If a
   real contract ever emits the same event type twice in one transaction
   (e.g. a batched treasury deposit), the `(samooh_id, type,

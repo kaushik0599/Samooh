@@ -8,7 +8,7 @@ Sarthi insights, activity/indexing records.
 Blockchain remains authoritative for: proposal status, votes, quorum,
 treasury balance/transfers — the `proposals.status` column here is a
 **cache**, reconciled against the chain by the API layer (see
-`src/lib/services/reconcile.service.ts`).
+`backend/src/lib/services/reconcile.service.ts`).
 
 ## Tables
 
@@ -42,7 +42,7 @@ treasury balance/transfers — the `proposals.status` column here is a
   plain unique index still lets null tx hashes repeat freely since SQL
   treats `NULL <> NULL`.
 - `proposals.status` is constrained to the `ProposalStatus` enum in
-  `src/types/index.ts`; keep both in sync if it ever changes.
+  `packages/types/src/index.ts`; keep both in sync if it ever changes.
 - `samooh_join_requests` has a partial unique index on
   `(samooh_id, wallet_address)` for `status in ('REQUESTED','APPROVED')` —
   only one active request per wallet per Samooh; a rejected/cancelled one

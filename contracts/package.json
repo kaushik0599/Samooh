@@ -1,0 +1,20 @@
+{
+  "name": "@samooh/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SAMOOH on-chain governance contracts (SamoohGovernance, SamoohTreasury, SamoohFactory) for Polygon Amoy.",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:local": "hardhat run scripts/deploy.ts",
+    "deploy:amoy": "hardhat run scripts/deploy.ts --network amoy"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@openzeppelin/contracts": "^5.0.2",
+    "@types/node": "^20.14.0",
+    "dotenv": "^16.4.5",
+    "hardhat": "^2.22.10",
+    "typescript": "^5.5.4"
+  }
+}

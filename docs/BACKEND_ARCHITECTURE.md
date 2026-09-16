@@ -7,26 +7,32 @@
 Supabase is a fast, queryable cache of collective metadata. The blockchain
 is the sole authority for governance/treasury truth. If they disagree, the
 blockchain wins — see `reconcileProposalStatus` in
-`src/lib/services/reconcile.service.ts`.
+`backend/src/lib/services/reconcile.service.ts`.
 
 ## Layers
 
 ```
-API ROUTE (src/app/api/**/route.ts)
-  -> VALIDATION (src/lib/validation)
-  -> SERVICE (src/lib/services)
-  -> DATABASE (src/lib/supabase) / BLOCKCHAIN (src/lib/blockchain)
-  -> NORMALIZED RESPONSE (src/lib/api/response.ts)
+API ROUTE (backend/src/app/api/**/route.ts)
+  -> VALIDATION (backend/src/lib/validation)
+  -> SERVICE (backend/src/lib/services)
+  -> DATABASE (backend/src/lib/supabase) / BLOCKCHAIN (backend/src/lib/blockchain)
+  -> NORMALIZED RESPONSE (backend/src/lib/api/response.ts)
 ```
 
-- `src/lib/supabase/` — Supabase server client (service-role key, server-only).
-- `src/lib/blockchain/` — read-only ethers.js adapter, isolated from ABI
+- `backend/src/lib/supabase/` — Supabase server client (service-role key, server-only).
+- `backend/src/lib/blockchain/` — read-only ethers.js adapter, isolated from ABI
   assumptions (see BLOCKCHAIN_INTEGRATION.md). No signer, ever.
-- `src/lib/sarthi/` — deterministic advisory analysis over collective data.
-- `src/lib/services/` — business logic tying DB + blockchain + Sarthi together.
-- `src/lib/validation/` — shared input validators (wallets, amounts, ids).
-- `src/lib/discovery/` — deterministic, transparent Samooh matching/scoring.
-- `src/types/` — single source of truth for shared types and enums.
+- `backend/src/lib/sarthi/` — deterministic advisory analysis over collective data.
+- `backend/src/lib/services/` — business logic tying DB + blockchain + Sarthi together.
+- `backend/src/lib/validation/` — shared input validators (wallets, amounts, ids).
+- `backend/src/lib/discovery/` — deterministic, transparent Samooh matching/scoring.
+- `packages/types/src/` — single source of truth for shared types and enums,
+  imported by both `backend/` and `frontend/` (a workspace package, not
+  duplicated — see `packages/types/package.json`). Also holds the shared,
+  non-secret blockchain ABI placeholders (`src/blockchain.ts`) both apps
+  read.
+- `backend/middleware.ts` — CORS for `/api/*`, since `frontend/` now calls
+  this backend cross-origin as a separate app rather than same-origin.
 
 ## Non-negotiables
 
@@ -34,14 +40,29 @@ API ROUTE (src/app/api/**/route.ts)
   `ethers.Wallet`/signer. All state-changing transactions happen client-side.
 - `POST /api/proposals` and `POST /api/sarthi/proposal` write metadata only
   (`status: DRAFT`). They cannot vote, approve, reject, execute, or move funds.
-- Sarthi (`src/lib/sarthi/`) only ever returns advisory insight drafts.
+- Sarthi (`backend/src/lib/sarthi/`) only ever returns advisory insight drafts.
 - Proposal `status` returned by the API is reconciled against the chain,
   never trusted from the DB alone, whenever an `onchain_proposal_id` exists.
 - `POST /api/samooh/[id]/join` only ever creates a `samooh_join_requests`
   row (`status: REQUESTED`). It never inserts into `members` — actual
   membership stays governed on-chain or by a separate explicit approval step.
 
-See `src/__tests__/` for automated checks of these invariants.
+See `backend/src/__tests__/` for automated checks of these invariants.
+
+## Supabase dependency
+
+Every Supabase-backed route (everything except `GET /api/health` and the
+blockchain-only reads) fails with a plain `500 Internal Server Error` /
+`INTERNAL_ERROR` if `NEXT_PUBLIC_SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY`
+aren't set — `getSupabaseServerClient()` (`backend/src/lib/supabase/client.ts`)
+throws before any query runs, `withErrorHandling` catches it, logs the real
+"Missing Supabase configuration..." message server-side only, and returns
+the generic 500 (never leaking that detail to the client, same as any
+other unexpected error — see `response.ts`). This is expected, correct
+behavior while Supabase isn't configured yet, not a bug. `GET /api/health`
+always reports whether Supabase is configured (`data.supabase`) without
+needing a real query, so it's the fastest way to confirm this is the
+cause of an otherwise-generic frontend failure.
 
 ## Trust Model
 
