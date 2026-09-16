@@ -7,6 +7,13 @@ export interface RecordActivityInput {
   actor: string | null;
   description: string;
   transaction_hash: string | null;
+  /** Structured amount/token and entity links — the Block Ledger fields. All optional/nullable. */
+  amount?: string | null;
+  /** Defaults to 'MATIC' when omitted, matching the column default. */
+  token?: string;
+  proposal_id?: string | null;
+  governance_id?: string | null;
+  treasury_id?: string | null;
 }
 
 /**
@@ -18,10 +25,20 @@ export async function recordActivity(input: RecordActivityInput): Promise<Activi
   const supabase = getSupabaseServerClient();
   const { data, error } = await supabase
     .from("activity")
-    .upsert(input, {
-      onConflict: "samooh_id,type,transaction_hash",
-      ignoreDuplicates: true,
-    })
+    .upsert(
+      {
+        ...input,
+        amount: input.amount ?? null,
+        token: input.token ?? "MATIC",
+        proposal_id: input.proposal_id ?? null,
+        governance_id: input.governance_id ?? null,
+        treasury_id: input.treasury_id ?? null,
+      },
+      {
+        onConflict: "samooh_id,type,transaction_hash",
+        ignoreDuplicates: true,
+      }
+    )
     .select()
     .maybeSingle();
 
